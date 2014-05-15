@@ -19,6 +19,8 @@
 jsdom      = require 'jsdom'
 _          = require 'underscore'
 request    = require 'request'
+jschardet  = require 'jschardet'
+iconv      = require 'iconv'
 
 module.exports = (robot) ->
 
@@ -43,11 +45,16 @@ module.exports = (robot) ->
 
     unless ignore
       request(
-        url
+        {url: url, encoding: null}
         (error, response, body) ->
           if response.statusCode == 200
+            detect = jschardet.detect body
+            charset = detect.encoding
+            ic = new iconv.Iconv(charset, 'UTF-8//TRANSLIT//IGNORE')
+            convertBody = ic.convert(body).toString()
+
             jsdom.env(
-              body
+              convertBody
               done: (errors, window) ->
                 unless errors
                   title = window.document.title.trim()
